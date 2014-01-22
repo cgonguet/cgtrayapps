@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="BusTrayReminder" default="make.jar" basedir=".">
+
+    <path id="sourcepath">
+        <dirset dir="${basedir}">
+            <include name="src"/>
+        </dirset>
+    </path>
+
+    <property name="output.dir" value="target"/>
+    <property name="output.jar" value="${basedir}/BusTrayReminder.jar"/>
+
+    <target name="compile" description="Compile classes">
+
+        <mkdir dir="${output.dir}"/>
+        <javac destdir="${output.dir}">
+            <src refid="sourcepath"/>
+        </javac>
+    </target>
+
+    <target name="clean" description="cleanup module production">
+        <delete dir="${output.dir}"/>
+    </target>
+
+    <path id="manifest">
+        <file directory="${basedir}/src/META-INF" name="MANIFEST.MF"/>
+    </path>
+
+    <target name="make.jar" depends="compile">
+        <delete file="${output.jar}"/>
+
+        <manifest file="target/MANIFEST.MF">
+          <attribute name="Main-Class"
+                     value="BusTrayReminder" />
+        </manifest>
+        <jar destfile="${output.jar}" manifest="target/MANIFEST.MF">
+            <fileset dir="${basedir}/src">
+                <include name="icons/*"/>
+            </fileset>
+            <fileset dir="${output.dir}">
+                <include name="**/*"/>
+                <exclude name="*.properties"/>
+                <exclude name="*.MF"/>
+            </fileset>
+        </jar>
+    </target>
+
+
+</project>
