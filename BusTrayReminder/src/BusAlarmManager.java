@@ -3,21 +3,41 @@ import scheduler.Scheduler;
 import scheduler.SchedulerTask;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 
 public class BusAlarmManager {
   private static BusAlarmManager theInstance;
   private List<BusAlarm> busAlarms = new ArrayList<BusAlarm>();
-  private int delayInMinutes = 10;
+  private Properties properties;
+    private int delay;
+    private File dataFile;
 
-  private BusAlarmManager() {
+    private BusAlarmManager()
+  {
+      properties = new Properties();
+      try
+      {
+          properties.load(new FileReader("data/default.properties"));
+      }
+      catch (IOException e)
+      {
+          e.printStackTrace();
+      }
+      delay = Integer.valueOf(properties.getProperty("delay", "10"));
+      dataFile = new File(properties.getProperty("data", "data/bus.dat"));
   }
 
-  public static BusAlarmManager getInstance() {
+  public static BusAlarmManager getInstance()
+  {
     if (theInstance == null) {
       theInstance = new BusAlarmManager();
     }
@@ -33,8 +53,7 @@ public class BusAlarmManager {
     BufferedReader br = new BufferedReader(reader);
     String line;
     while ((line = br.readLine()) != null) {
-      String[] data = line.split(":");
-      busAlarms.add(new BusAlarm(Integer.valueOf(data[0]), Integer.valueOf(data[1])));
+      busAlarms.add(BusAlarm.decode(line));
     }
   }
 
@@ -59,12 +78,8 @@ public class BusAlarmManager {
     printer.print("Next " + nextAlarm, text);
   }
 
-  public void setDelay(int delayInMinutes) {
-    this.delayInMinutes = delayInMinutes;
-  }
-
-  public int getDelay() {
-    return delayInMinutes;
+  public File getDataFile() {
+      return dataFile;
   }
 
   public void createAlarms(final Printer printer) {
@@ -84,7 +99,7 @@ public class BusAlarmManager {
 
       calendar.set(Calendar.HOUR_OF_DAY, busAlarm.hour);
       calendar.set(Calendar.MINUTE, busAlarm.minute);
-      calendar.setTimeInMillis(calendar.getTimeInMillis() - delayInMinutes * 60000);
+      calendar.setTimeInMillis(calendar.getTimeInMillis() - delay * 60000);
 
       Scheduler.getInstance().schedule(new SchedulerTask() {
         public void run() {

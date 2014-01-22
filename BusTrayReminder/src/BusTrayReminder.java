@@ -5,13 +5,19 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.net.URL;
 
 public class BusTrayReminder {
 
+
   public static void main(String[] args) {
     try {
-      UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+        if(isWindows()){
+            UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+        } else if (isUnix()){
+            UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
+        }
     } catch (UnsupportedLookAndFeelException ex) {
       ex.printStackTrace();
     } catch (IllegalAccessException ex) {
@@ -29,7 +35,20 @@ public class BusTrayReminder {
     });
   }
 
-  private static void createAndShowGUI() {
+    private static String OS = System.getProperty("os.name").toLowerCase();
+
+    private static boolean isWindows()
+    {
+        return (OS.indexOf("win") >= 0);
+    }
+
+    private static boolean isUnix()
+    {
+        return (OS.indexOf("nix") >= 0 || OS.indexOf("nux") >= 0 || OS.indexOf("aix") > 0);
+    }
+
+    private static void createAndShowGUI()
+    {
     if (!SystemTray.isSupported()) {
       System.out.println("SystemTray is not supported");
       return;
@@ -46,15 +65,12 @@ public class BusTrayReminder {
     MenuItem aboutItem = new MenuItem("Bus Reminder");
     MenuItem showAlarmsItem = new MenuItem("Show alarms");
     MenuItem loadAlarmsItem = new MenuItem("Load alarms...");
-    MenuItem delayItem = new MenuItem("Set delay...");
     MenuItem exitItem = new MenuItem("Exit");
 
     popup.add(aboutItem);
     popup.addSeparator();
     popup.add(showAlarmsItem);
     popup.add(loadAlarmsItem);
-    popup.addSeparator();
-    popup.add(delayItem);
     popup.addSeparator();
     popup.add(exitItem);
 
@@ -85,11 +101,13 @@ public class BusTrayReminder {
 
     loadAlarmsItem.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-          BusAlarmFileDialog.showDialog(new Runnable(){
+          BusAlarmFileDialog.showDialog(new Runnable()
+          {
 
-            public void run() {
-              BusAlarmManager.getInstance().createAlarms(new TrayMessage(trayIcon));
-            }
+              public void run()
+              {
+                  BusAlarmManager.getInstance().createAlarms(new TrayMessage(trayIcon));
+              }
           }, BusAlarmFileManager.getInstance().getAlarmFile());
         }
       });
@@ -101,19 +119,7 @@ public class BusTrayReminder {
       }
     });
 
-    delayItem.addActionListener(new ActionListener() {
-
-      public void actionPerformed(ActionEvent e) {
-        String delay = JOptionPane.showInputDialog("Enter delay in minutes:", BusAlarmManager.getInstance().getDelay());
-        if (delay == null) {
-          return;
-        }
-        BusAlarmManager.getInstance().setDelay(Integer.valueOf(delay));
-        BusAlarmManager.getInstance().createAlarms(new TrayMessage(trayIcon));
-      }
-    });
-
-    BusAlarmFileManager.getInstance().setAlarmFile(new File("data/bus.dat"));
+    BusAlarmFileManager.getInstance().setAlarmFile(BusAlarmManager.getInstance().getDataFile());
     try {
       BusAlarmManager.getInstance().readAlarms(new FileReader(BusAlarmFileManager.getInstance().getAlarmFile()));
     } catch (Exception e) {
